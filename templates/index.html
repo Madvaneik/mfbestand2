@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fids-Paff Bestellvorschlag</title>
+    <!-- Fügen Sie die Bootstrap-Links hier ein -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        select.form-control {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 10px;
+        }
+        table.table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: #fff;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+        th:first-child, td:first-child {
+            padding-left: 20px;
+        }
+        .yellow-row {
+            background-color: yellow;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .search-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+        }
+        .search-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        /* Dark Mode-Stile */
+        .dark-mode {
+            background-color: #1e1e1e;
+            color: #ffffff;
+        }
+        .dark-mode table.table {
+            background-color: #2c2c2c;
+            color: #fdfdfd; /* Ändern Sie die Textfarbe auf schwarz */
+        }
+        .dark-mode th {
+            background-color: #1a1a1a;
+        }
+
+        /* Dunkler Text für die Tage-für-Berechnung-Spalte im Dark Mode */
+        .dark-mode table.table td.yellow-row {
+            color: #000000; /* Schriftfarbe auf schwarz ändern */
+        }
+
+        /* Schalter für Dark Mode */
+        .dark-mode-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1;
+        }
+
+        /* Fixierte Kopfzeile */
+        .table-fix-header thead {
+            position: sticky;
+            top: 0;
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        /* Hinzugefügter Scroll-Effekt für die Tabelle */
+        .table-wrapper {
+            max-height: calc(100vh - 150px); /* Ändern Sie die Höhe auf die Höhe des Fensters abzüglich des Headers und anderer Elemente */
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h1>Fids-Paff Bestellvorschlag</h1>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <!-- Dropdown-Filter für Bestellvorschläge -->
+                <select id="filterSelect" class="form-control">
+                    <option value="all">Alle Bestellvorschläge</option>
+                    <option value="vorschlag14">Bestellvorschlag 14 Tage</option>
+                    <option value="vorschlag30">Bestellvorschlag 30 Tage</option>
+                    <option value="vorschlag60">Bestellvorschlag 60 Tage</option>
+                    <option value="vorschlag90">Bestellvorschlag 90 Tage</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <!-- Dropdown-Filter für Lieferanten -->
+                <select id="lieferantFilterSelect" class="form-control">
+                    <option value="all">Alle Lieferanten</option>
+                    <!-- JavaScript fügt die Lieferantenoptionen ein -->
+                </select>
+            </div>
+            <div class="col-md-2">
+                <!-- Suchfeld für Bezeichnung und Artikelnummer -->
+                <input type="text" id="searchInput" class="form-control" placeholder="Suche...">
+            </div>
+            <div class="col-md-2">
+                <!-- Rückstand-Button mit Link zu Google Sheets -->
+                <a href="https://docs.google.com/spreadsheets/d/1ALxkNQkxi_F14bzpLFSo1A8eOLILz0FkQAPmVMiS-X0/edit?usp=sharing" target="_blank" class="btn btn-primary btn-block">Rückstand</a>
+            </div>
+        </div>
+
+        <!-- Tabelle mit fixierter Kopfzeile und Scroll-Effekt -->
+        <div class="table-wrapper">
+            <table class="table table-fix-header">
+                <thead>
+                    <tr>
+                        <th>Artikelnummer</th>
+                        <th>Bezeichnung</th>
+                        <th>Lagerbestand</th>
+                        <th>Nachbestellt</th>
+                        <th>Lieferant</th>
+                        <th>Bestellvorschlag 14 Tage</th>
+                        <th>Bestellvorschlag 30 Tage</th>
+                        <th>Bestellvorschlag 60 Tage</th>
+                        <th>Bestellvorschlag 90 Tage</th>
+                        <th>Tage für Berechnung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data %}
+                        <tr class="item-row" data-vorschlag14="{{ item['Bestellvorschlag 14 Tage'] }}" data-vorschlag30="{{ item['Bestellvorschlag 30 Tage'] }}" data-vorschlag60="{{ item['Bestellvorschlag 60 Tage'] }}" data-vorschlag90="{{ item['Bestellvorschlag 90 Tage'] }}" data-lieferant="{{ item['Lieferant'] }}">
+                            <td>{{ item['Artikelnummer'] }}</td>
+                            <td>{{ item['Bezeichnung'] }}</td>
+                            <td>{{ item['Lagerbestand']|int }}</td>
+                            <td>{{ item['Nachbestellt']|int }}</td>
+                            <td class="lieferant">{{ item['Lieferant'] }}</td>
+                            <td>{{ item['Bestellvorschlag 14 Tage']|int }}</td>
+                            <td>{{ item['Bestellvorschlag 30 Tage']|int }}</td>
+                            <td>{{ item['Bestellvorschlag 60 Tage']|int }}</td>
+                            <td>{{ item['Bestellvorschlag 90 Tage']|int }}</td>
+                            <td {% if item['Tage für Berechnung'] != 120 %}class="yellow-row"{% endif %}>
+                                {{ item['Tage für Berechnung'] }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Schalter für Dark Mode -->
+    <div class="dark-mode-switch">
+        <label for="darkModeSwitch">Dark Mode</label>
+        <input type="checkbox" id="darkModeSwitch">
+    </div>
+
+    <script>
+        // JavaScript-Code für den Bestellvorschlagsfilter
+        document.getElementById('filterSelect').addEventListener('change', applyFilters);
+        document.getElementById('lieferantFilterSelect').addEventListener('change', applyFilters);
+
+        function applyFilters() {
+            var selectedVorschlagValue = document.getElementById('filterSelect').value;
+            var selectedLieferantValue = document.getElementById('lieferantFilterSelect').value;
+
+            // Zeige alle Zeilen an, bevor wir den Filter anwenden
+            var rows = document.querySelectorAll('.item-row');
+            rows.forEach(function (row) {
+                row.style.display = '';
+            });
+
+            if (selectedVorschlagValue !== 'all') {
+                // Verberge Zeilen, die nicht dem ausgewählten Vorschlag entsprechen
+                rows.forEach(function (row) {
+                    var vorschlag14 = parseInt(row.getAttribute('data-vorschlag14')) || 0;
+                    var vorschlag30 = parseInt(row.getAttribute('data-vorschlag30')) || 0;
+                    var vorschlag60 = parseInt(row.getAttribute('data-vorschlag60')) || 0;
+                    var vorschlag90 = parseInt(row.getAttribute('data-vorschlag90')) || 0;
+
+                    if (selectedVorschlagValue === 'vorschlag14' && vorschlag14 === 0) {
+                        row.style.display = 'none';
+                    } else if (selectedVorschlagValue === 'vorschlag30' && vorschlag30 === 0) {
+                        row.style.display = 'none';
+                    } else if (selectedVorschlagValue === 'vorschlag60' && vorschlag60 === 0) {
+                        row.style.display = 'none';
+                    } else if (selectedVorschlagValue === 'vorschlag90' && vorschlag90 === 0) {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+
+            if (selectedLieferantValue !== 'all') {
+                // Verberge Zeilen, die nicht dem ausgewählten Lieferanten entsprechen
+                rows.forEach(function (row) {
+                    var lieferantenArray = row.getAttribute('data-lieferant').split(', ');
+                    if (lieferantenArray.indexOf(selectedLieferantValue) === -1) {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        // JavaScript-Code zum Hinzufügen von Lieferantenoptionen
+        var lieferantFilterSelect = document.getElementById('lieferantFilterSelect');
+        var lieferanten = [];
+
+        // Durchlaufen Sie Ihre Daten, um eindeutige Lieferantenwerte zu extrahieren
+        {% for item in data %}
+            var lieferantenArray = "{{ item['Lieferant'] }}".split(', ');
+            lieferantenArray.forEach(function(lieferant) {
+                if (lieferanten.indexOf(lieferant) === -1) {
+                    lieferanten.push(lieferant);
+                }
+            });
+        {% endfor %}
+
+        // Fügen Sie die Lieferantenoptionen in das Dropdown-Menü ein
+        lieferanten.forEach(function (lieferant) {
+            var option = document.createElement('option');
+            option.value = lieferant;
+            option.text = lieferant;
+            lieferantFilterSelect.appendChild(option);
+        });
+
+        // JavaScript-Code für die Echtzeit-Suche
+        document.getElementById('searchInput').addEventListener('input', function () {
+            searchTable();
+        });
+
+        function searchTable() {
+            var searchValue = document.getElementById('searchInput').value.toLowerCase();
+            var rows = document.querySelectorAll('.item-row');
+
+            rows.forEach(function (row) {
+                var artikelnummer = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+                var bezeichnung = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+
+                if (artikelnummer.includes(searchValue) || bezeichnung.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Funktion zum Aktivieren des Dark Modes
+        function enableDarkMode() {
+            document.body.classList.add('dark-mode');
+        }
+
+        // Funktion zum Deaktivieren des Dark Modes
+        function disableDarkMode() {
+            document.body.classList.remove('dark-mode');
+        }
+
+        // Funktion zum Umschalten zwischen Dark Mode und Light Mode
+        function toggleDarkMode() {
+            if (darkModeSwitch.checked) {
+                enableDarkMode();
+            } else {
+                disableDarkMode();
+            }
+        }
+
+        // Überwachen Sie Änderungen am Schalter und rufen Sie toggleDarkMode auf
+        var darkModeSwitch = document.getElementById('darkModeSwitch');
+        darkModeSwitch.addEventListener('change', toggleDarkMode);
+
+        // Funktion zum Überprüfen, ob der Dark Mode in den Browser-Einstellungen aktiviert ist
+        function checkDarkModePreference() {
+            const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (prefersDarkMode) {
+                enableDarkMode();
+                darkModeSwitch.checked = true;
+            }
+        }
+
+        // Rufen Sie checkDarkModePreference auf, um die Browser-Einstellungen zu überprüfen
+        checkDarkModePreference();
+    </script>
+</body>
+</html>
